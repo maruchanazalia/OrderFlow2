@@ -430,7 +430,7 @@ export class SyncScheduler {
       }
 
       if (movimientos.length > 0) {
-        const conceptoId = process.env.CONTAPAQI_CONCEPTO_ID || '3';
+        const conceptoId = 'LVEN'; // Concepto específico para ventas
         const clienteId = sale.customer_id || process.env.CONTAPAQI_CLIENTE_DEFAULT || '1';
         const fecha = sale.complete_time || sale.create_time || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
@@ -590,7 +590,7 @@ export class SyncScheduler {
       }
 
       if (movimientos.length > 0) {
-        const conceptoId = process.env.CONTAPAQI_CONCEPTO_ID || '3';
+        const conceptoId = 'LDEV'; // Concepto específico para devoluciones
         const clienteId = returnSale.customerID || process.env.CONTAPAQI_CLIENTE_DEFAULT || '1';
         const fecha = returnSale.completeTime || returnSale.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
@@ -652,7 +652,7 @@ export class SyncScheduler {
       }
 
       if (movimientos.length > 0) {
-        const conceptoId = process.env.CONTAPAQI_CONCEPTO_ID || '3';
+        const conceptoId = 'LCOM'; // Concepto específico para compras
         const proveedorId = po.vendorID || process.env.CONTAPAQI_PROVEEDOR_DEFAULT || '1';
         const fecha = po.completeTime || po.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
