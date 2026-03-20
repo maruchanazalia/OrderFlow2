@@ -394,6 +394,7 @@ export class SyncScheduler {
         Producto: string;
         Cantidad: number;
         Precio: number;
+        Almacen?: string;
       }> = [];
 
       for (const line of saleLines) {
@@ -431,7 +432,8 @@ export class SyncScheduler {
 
       if (movimientos.length > 0) {
         const conceptoId = 'LVEN'; // Concepto específico para ventas
-        const clienteId = sale.customer_id || process.env.CONTAPAQI_CLIENTE_DEFAULT || '1';
+        const clienteId = '1'; // Valor fijo según requerimiento
+        const coordenadas = '1'; // Valor fijo según requerimiento
         const fecha = sale.complete_time || sale.create_time || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
@@ -439,11 +441,15 @@ export class SyncScheduler {
         const documento = {
           Concepto: conceptoId,
           Cliente: clienteId,
+          Coordenadas: coordenadas,
           Fecha: fechaISO,
           Observacion: `Venta desde Lightspeed - ${sale.sale_number || sale.sale_id}`,
           Referencia: sale.reference_number || sale.sale_number || sale.sale_id,
           Agente: agente,
-          Movimientos: movimientos,
+          Movimientos: movimientos.map((mov) => ({
+            ...mov,
+            Almacen: mov.Almacen || '1',
+          })),
         };
 
         await this.db.enqueueContpaqiOperation('process_document', documento, 8);
@@ -568,6 +574,7 @@ export class SyncScheduler {
         Producto: string;
         Cantidad: number;
         Precio: number;
+        Almacen?: string;
       }> = [];
 
       for (const line of saleLines) {
@@ -591,7 +598,8 @@ export class SyncScheduler {
 
       if (movimientos.length > 0) {
         const conceptoId = 'LDEV'; // Concepto específico para devoluciones
-        const clienteId = returnSale.customerID || process.env.CONTAPAQI_CLIENTE_DEFAULT || '1';
+        const clienteId = '1'; // Valor fijo según requerimiento
+        const coordenadas = '1'; // Valor fijo según requerimiento
         const fecha = returnSale.completeTime || returnSale.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
@@ -601,11 +609,15 @@ export class SyncScheduler {
           {
             Concepto: conceptoId,
             Cliente: clienteId,
+            Coordenadas: coordenadas,
             Fecha: fechaISO,
             Observacion: `Devolución desde Lightspeed - ${returnSale.saleNumber || returnSale.saleID}`,
             Referencia: returnSale.referenceNumber || returnSale.saleNumber || returnSale.saleID,
             Agente: agente,
-            Movimientos: movimientos,
+            Movimientos: movimientos.map((mov) => ({
+              ...mov,
+              Almacen: mov.Almacen || '1',
+            })),
           },
           8
         );
@@ -628,6 +640,7 @@ export class SyncScheduler {
         Producto: string;
         Cantidad: number;
         Precio: number;
+        Almacen?: string;
       }> = [];
 
       for (const line of purchaseOrderLines) {
@@ -653,7 +666,8 @@ export class SyncScheduler {
 
       if (movimientos.length > 0) {
         const conceptoId = 'LCOM'; // Concepto específico para compras
-        const proveedorId = po.vendorID || process.env.CONTAPAQI_PROVEEDOR_DEFAULT || '1';
+        const proveedorId = po.vendorID || '1';
+        const coordenadas = '1'; // Valor fijo según requerimiento
         const fecha = po.completeTime || po.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
@@ -663,11 +677,15 @@ export class SyncScheduler {
           {
             Concepto: conceptoId,
             Cliente: proveedorId,
+            Coordenadas: coordenadas,
             Fecha: fechaISO,
             Observacion: `Compra desde Lightspeed - ${po.purchaseOrderNumber || po.purchaseOrderID}`,
             Referencia: po.purchaseOrderNumber || po.purchaseOrderID,
             Agente: agente,
-            Movimientos: movimientos,
+            Movimientos: movimientos.map((mov) => ({
+              ...mov,
+              Almacen: mov.Almacen || '1',
+            })),
           },
           8
         );

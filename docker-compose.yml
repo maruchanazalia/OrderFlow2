@@ -16,6 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - lightspeed-network
 
   api:
     build:
@@ -27,6 +29,8 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      # Environment
+      NODE_ENV: docker
       # Lightspeed OAuth2 Credentials
       LIGHTSPEED_API_URL: ${LIGHTSPEED_API_URL:-https://api.lightspeedapp.com}
       LIGHTSPEED_OAUTH_URL: ${LIGHTSPEED_OAUTH_URL:-https://cloud.lightspeedapp.com/oauth/access_token.php}

@@ -151,6 +151,62 @@ describe('SyncScheduler', () => {
     });
   });
 
+  describe('processSaleToContpaqi', () => {
+    beforeEach(() => {
+      scheduler = new SyncScheduler();
+    });
+
+    it('debe crear documento con cliente 1, coordenadas 1, y almacen 1', async () => {
+      const sale = {
+        sale_id: 'S1',
+        sale_number: '116',
+        reference_number: '116',
+        complete_time: '2021-02-10T20:38:41',
+      };
+
+      mockDb.query = jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FROM sale_lines')) {
+          return Promise.resolve({ rows: [
+            { item_id: 'P1', unit_quantity: '1', unit_price: '344.82', sale_line_id: 'SL1' }
+          ]});
+        }
+
+        if (sql.includes('FROM items')) {
+          return Promise.resolve({ rows: [{ custom_sku: '0', system_sku: '0', upc: '0' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      });
+
+      mockDb.enqueueContpaqiOperation = jest.fn().mockResolvedValue(1);
+
+      const result = await (scheduler as any).processSaleToContpaqi(sale);
+
+      expect(result).toBe('agregada');
+      expect(mockDb.enqueueContpaqiOperation).toHaveBeenCalledWith(
+        'process_document',
+        expect.objectContaining({
+          Concepto: 'LVEN',
+          Cliente: '1',
+          Coordenadas: '1',
+          Observacion: 'Venta desde Lightspeed - 116',
+          Referencia: '116',
+          Agente: 'Sistema de Sincronización',
+          Fecha: expect.stringContaining('2021-02-10T20:38:41'),
+          Movimientos: [
+            expect.objectContaining({
+              Producto: '0',
+              Cantidad: 1,
+              Precio: 344.82,
+              Almacen: '1',
+            }),
+          ],
+        }),
+        8
+      );
+    });
+  });
+
   describe('syncPurchaseOrders', () => {
     beforeEach(() => {
       scheduler = new SyncScheduler();

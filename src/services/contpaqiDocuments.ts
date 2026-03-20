@@ -5,12 +5,14 @@ export interface ContpaqiMovimiento {
   Producto: string; // ID del producto en CONTPAQi
   Cantidad: number;
   Precio: number; // Requerido
+  Almacen?: string; // Almacén asignado (por defecto '1')
   [key: string]: any;
 }
 
 export interface ContpaqiDocumento {
   Concepto: string; // ID del concepto en CONTPAQi
   Cliente?: string; // ID del cliente en CONTPAQi
+  Coordenadas?: string; // Campo adicional requerido por el formato
   Fecha: string; // Formato ISO completo: "2023-06-27T12:34:56"
   Observacion?: string; // Con una 'c'
   Referencia?: string;
@@ -19,8 +21,8 @@ export interface ContpaqiDocumento {
   [key: string]: any;
 }
 
-// El retorno es un String (mensaje de confirmación)
-export type ContpaqiDocumentoResponse = string;
+// El retorno puede ser string o un objeto de respuesta de CONTPAQi
+export type ContpaqiDocumentoResponse = any;
 
 export class ContpaqiDocumentsService {
   private axiosInstance: AxiosInstance;
@@ -49,9 +51,14 @@ export class ContpaqiDocumentsService {
         }
       );
 
-      logger.info(`Documento procesado exitosamente: ${response.data}`);
-      
-      return response.data;
+      logger.info(`Documento procesado exitosamente: ${JSON.stringify(response.data)}`);
+      const responseData = response.data;
+
+      if (responseData && typeof responseData === 'object' && responseData.success === false) {
+        throw new Error(responseData.error || 'Error de validación de documento');
+      }
+
+      return responseData;
     } catch (error: any) {
       logger.error('Error al procesar documento en CONTPAQi', {
         error: error.message,
@@ -94,8 +101,8 @@ export class ContpaqiDocumentsService {
   async crearDocumentoConMovimientos(
     movimientos: ContpaqiMovimiento[],
     conceptoId: string = '3',
-    clienteId?: string,
-    agente?: string,
+    clienteId: string = '1',
+    agente: string = 'Sistema de Sincronización',
     fecha?: string,
     observacion?: string,
     referencia?: string
@@ -103,11 +110,15 @@ export class ContpaqiDocumentsService {
     const documento: ContpaqiDocumento = {
       Concepto: conceptoId,
       Cliente: clienteId,
+      Coordenadas: '1',
       Fecha: fecha || new Date().toISOString().replace('Z', ''),
       Observacion: observacion,
       Referencia: referencia,
       Agente: agente,
-      Movimientos: movimientos,
+      Movimientos: movimientos.map((mov) => ({
+        ...mov,
+        Almacen: mov.Almacen || '1',
+      })),
     };
 
     return await this.procesarDocumento(documento);
