@@ -1,6 +1,11 @@
 import { SyncScheduler } from './jobs/scheduler';
 import { logger } from './config/logger';
 
+// Desactivar validación de certificados SSL en desarrollo/docker
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'docker') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 async function main() {
   logger.info('Iniciando aplicación Lightspeed Sync...');
 
