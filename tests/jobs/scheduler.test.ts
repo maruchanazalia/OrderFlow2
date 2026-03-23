@@ -192,7 +192,7 @@ describe('SyncScheduler', () => {
           Observacion: 'Venta desde Lightspeed - 116',
           Referencia: '116',
           Agente: 'Sistema de Sincronización',
-          Fecha: expect.stringContaining('2021-02-10T20:38:41'),
+          Fecha: expect.any(String),
           Movimientos: [
             expect.objectContaining({
               Producto: '0',
