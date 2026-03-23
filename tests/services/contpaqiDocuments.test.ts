@@ -8,6 +8,9 @@ describe('ContpaqiDocumentsService', () => {
   beforeEach(() => {
     mockAxios = {
       post: jest.fn(),
+      defaults: {
+        baseURL: 'https://api.contpaqi.com',
+      },
     } as any;
 
     documentsService = new ContpaqiDocumentsService(mockAxios);
@@ -31,9 +34,19 @@ describe('ContpaqiDocumentsService', () => {
 
       const result = await documentsService.procesarDocumento(documento);
       expect(result).toBe('OK');
+      
+      // Verificar que Cliente, Coordenadas y Almacen fueron normalizados a '1'
       expect(mockAxios.post).toHaveBeenCalledWith(
         '/api/Documento/ProcesarDocumento',
-        documento,
+        expect.objectContaining({
+          Cliente: '1',
+          Coordenadas: '1',
+          Movimientos: expect.arrayContaining([
+            expect.objectContaining({
+              Almacen: '1',
+            }),
+          ]),
+        }),
         { headers: { 'Content-Type': 'application/json' } }
       );
     });
@@ -42,7 +55,7 @@ describe('ContpaqiDocumentsService', () => {
       const documento = {
         Concepto: 'Test',
         Fecha: '2025-01-05',
-        Movimientos: [{ CodigoProducto: 'PROD-001', Cantidad: 10 }],
+        Movimientos: [{ Producto: 'PROD-001', Cantidad: 10, Precio: 100 }],
       };
 
       const mockResponse = {
@@ -61,7 +74,7 @@ describe('ContpaqiDocumentsService', () => {
       const documento = {
         Concepto: 'Test',
         Fecha: '2025-01-05',
-        Movimientos: [{ CodigoProducto: 'PROD-001', Cantidad: 10 }],
+        Movimientos: [{ Producto: 'PROD-001', Cantidad: 10, Precio: 100 }],
       };
 
       const error = new Error('Network error');
@@ -73,17 +86,17 @@ describe('ContpaqiDocumentsService', () => {
 
   describe('crearAjusteInventario', () => {
     it('debe crear ajuste de inventario', async () => {
-      const mockResponse = {
-        data: { success: true, documentoId: 'DOC-123' },
-      };
+      const mockResponse = 'OK';
 
-      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse.data);
+      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse);
 
       const result = await documentsService.crearAjusteInventario('PROD-001', 10, 50);
-      expect(result).toEqual(mockResponse.data);
+      expect(result).toBe(mockResponse);
       expect(documentsService.procesarDocumento).toHaveBeenCalledWith(
         expect.objectContaining({
           Concepto: '3',
+          Cliente: '1',
+          Coordenadas: '1',
           Movimientos: [
             expect.objectContaining({
               Producto: 'PROD-001',
@@ -97,13 +110,11 @@ describe('ContpaqiDocumentsService', () => {
     });
 
     it('debe usar fecha personalizada cuando se proporciona', async () => {
-      const mockResponse = {
-        data: { success: true },
-      };
+      const mockResponse = 'OK';
 
-      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse.data);
+      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse);
 
-      await documentsService.crearAjusteInventario('PROD-001', 10, 'Test concepto', '2025-01-01');
+      await documentsService.crearAjusteInventario('PROD-001', 10, 50, 'Test concepto', '2025-01-01');
       
       expect(documentsService.procesarDocumento).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -121,11 +132,9 @@ describe('ContpaqiDocumentsService', () => {
         { Producto: 'PROD-002', Cantidad: 20, Precio: 200 },
       ];
 
-      const mockResponse = {
-        data: { success: true, documentoId: 'DOC-123' },
-      };
+      const mockResponse = 'OK';
 
-      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse.data);
+      jest.spyOn(documentsService, 'procesarDocumento').mockResolvedValue(mockResponse);
 
       const result = await documentsService.crearDocumentoConMovimientos(
         movimientos,
@@ -135,7 +144,7 @@ describe('ContpaqiDocumentsService', () => {
         '2025-01-05'
       );
 
-      expect(result.success).toBe(true);
+      expect(result).toBe(mockResponse);
       expect(documentsService.procesarDocumento).toHaveBeenCalledWith(
         expect.objectContaining({
           Concepto: 'Test concepto',

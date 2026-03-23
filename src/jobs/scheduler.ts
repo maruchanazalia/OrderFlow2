@@ -666,7 +666,7 @@ export class SyncScheduler {
 
       if (movimientos.length > 0) {
         const conceptoId = 'LCOM'; // Concepto específico para compras
-        const proveedorId = po.vendorID || '1';
+        const clienteId = '1'; // Valor fijo según requerimiento
         const coordenadas = '1'; // Valor fijo según requerimiento
         const fecha = po.completeTime || po.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
@@ -676,7 +676,7 @@ export class SyncScheduler {
           'process_document',
           {
             Concepto: conceptoId,
-            Cliente: proveedorId,
+            Cliente: clienteId,
             Coordenadas: coordenadas,
             Fecha: fechaISO,
             Observacion: `Compra desde Lightspeed - ${po.purchaseOrderNumber || po.purchaseOrderID}`,

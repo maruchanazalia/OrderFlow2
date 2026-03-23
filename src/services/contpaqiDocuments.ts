@@ -36,14 +36,27 @@ export class ContpaqiDocumentsService {
    */
   async procesarDocumento(documento: ContpaqiDocumento): Promise<string> {
     try {
+      const documentoNormalizado: ContpaqiDocumento = {
+        ...documento,
+        Cliente: documento.Cliente || '1',
+        Coordenadas: documento.Coordenadas || '1',
+        Movimientos: documento.Movimientos.map((mov) => ({
+          ...mov,
+          Almacen: mov.Almacen || '1',
+        })),
+      };
+
+      // Eliminar campos undefined para evitar serializarlos como null
+      const documentoLimpio = JSON.parse(JSON.stringify(documentoNormalizado));
+
       const baseUrl = this.axiosInstance.defaults.baseURL || '';
       const url = `${baseUrl}/api/Documento/ProcesarDocumento`;
       
-      logger.info(`Procesando documento CONTPAQi: ${documento.Concepto} con ${documento.Movimientos.length} movimientos`);
+      logger.info(`Procesando documento CONTPAQi: ${documentoLimpio.Concepto} con ${documentoLimpio.Movimientos.length} movimientos`);
 
       const response = await this.axiosInstance.post<string>(
         `/api/Documento/ProcesarDocumento`,
-        documento,
+        documentoLimpio,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -52,7 +65,7 @@ export class ContpaqiDocumentsService {
       );
 
       logger.info(`Documento procesado exitosamente: ${JSON.stringify(response.data)}`);
-      const responseData = response.data;
+      const responseData: any = response.data;
 
       if (responseData && typeof responseData === 'object' && responseData.success === false) {
         throw new Error(responseData.error || 'Error de validación de documento');
@@ -82,12 +95,15 @@ export class ContpaqiDocumentsService {
   ): Promise<string> {
     const documento: ContpaqiDocumento = {
       Concepto: conceptoId,
+      Cliente: '1',
+      Coordenadas: '1',
       Fecha: fecha || new Date().toISOString().replace('Z', ''),
       Movimientos: [
         {
           Producto: productoId,
           Cantidad: cantidad,
           Precio: precio,
+          Almacen: '1',
         },
       ],
     };
@@ -101,15 +117,15 @@ export class ContpaqiDocumentsService {
   async crearDocumentoConMovimientos(
     movimientos: ContpaqiMovimiento[],
     conceptoId: string = '3',
-    clienteId: string = '1',
-    agente: string = 'Sistema de Sincronización',
+    clienteId?: string,
+    agente?: string,
     fecha?: string,
     observacion?: string,
     referencia?: string
   ): Promise<string> {
     const documento: ContpaqiDocumento = {
       Concepto: conceptoId,
-      Cliente: clienteId,
+      Cliente: clienteId || '1',
       Coordenadas: '1',
       Fecha: fecha || new Date().toISOString().replace('Z', ''),
       Observacion: observacion,
