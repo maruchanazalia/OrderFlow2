@@ -27,16 +27,29 @@ export interface RateLimiter {
 export class BaseService {
   protected axiosInstance: AxiosInstance;
   protected accountId: string;
+  private static globalRateLimiter: RateLimiter | null = null;
   private rateLimiter: RateLimiter;
 
   constructor(axiosInstance: AxiosInstance, accountId: string) {
     this.axiosInstance = axiosInstance;
     this.accountId = accountId;
-    this.rateLimiter = {
-      requests: [],
-      maxRequests: parseInt(process.env.RATE_LIMIT_REQUESTS_PER_MINUTE || '60', 10),
-      windowMs: 60000, // 1 minuto
-    };
+
+    if (!BaseService.globalRateLimiter) {
+      const perSecondConfig = parseInt(process.env.RATE_LIMIT_REQUESTS_PER_SECOND || '299', 10);
+      const perSecond = Number.isNaN(perSecondConfig) || perSecondConfig < 1 ? 299 : perSecondConfig;
+      const maxPerSecond = Math.min(perSecond, 299); // Garantiza no pasar de 299 por segundo
+
+      const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '1000', 10);
+      const rateWindowMs = Number.isNaN(windowMs) || windowMs < 1 ? 1000 : windowMs;
+
+      BaseService.globalRateLimiter = {
+        requests: [],
+        maxRequests: maxPerSecond,
+        windowMs: rateWindowMs,
+      };
+    }
+
+    this.rateLimiter = BaseService.globalRateLimiter;
   }
 
   /**
