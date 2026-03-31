@@ -209,6 +209,22 @@ export class ContpaqiQueueProcessor {
       })),
     };
 
+    // Filtrar documentos hasta 2025 inclusive
+    const fechaDocumento = new Date(documentoContpaqi.Fecha);
+    if (isNaN(fechaDocumento.getTime())) {
+      throw new Error(`Fecha de documento inválida: ${documentoContpaqi.Fecha}`);
+    }
+
+    if (fechaDocumento.getUTCFullYear() < 2026) {
+      logger.info(`Documento omitido porque fecha ${documentoContpaqi.Fecha} es anterior a 2026`);
+      await this.db.markQueueOperationCompleted(operation.id, {
+        skipped: true,
+        reason: 'Fecha anterior a 2026',
+        fecha: documentoContpaqi.Fecha,
+      });
+      return;
+    }
+
     // El retorno es un String (mensaje de confirmación)
     const response = await this.contpaqiDocumentsService.procesarDocumento(documentoContpaqi);
 
@@ -218,6 +234,14 @@ export class ContpaqiQueueProcessor {
     });
 
     logger.info(`Documento procesado desde cola: ${response}`);
+  }
+
+  private isFecha2026EnAdelante(fechaIso: string): boolean {
+    const fecha = new Date(fechaIso);
+    if (isNaN(fecha.getTime())) {
+      return false;
+    }
+    return fecha.getUTCFullYear() >= 2026;
   }
 }
 

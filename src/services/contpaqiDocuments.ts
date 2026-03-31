@@ -50,12 +50,12 @@ export class ContpaqiDocumentsService {
       const documentoLimpio = JSON.parse(JSON.stringify(documentoNormalizado));
 
       const baseUrl = this.axiosInstance.defaults.baseURL || '';
-      const url = `${baseUrl}/api/Documento/ProcesarDocumento`;
+      const url = `${baseUrl}/api/Documento/ProcesarDocumentoBike`;
       
       logger.info(`Procesando documento CONTPAQi: ${documentoLimpio.Concepto} con ${documentoLimpio.Movimientos.length} movimientos`);
 
       const response = await this.axiosInstance.post<string>(
-        `/api/Documento/ProcesarDocumento`,
+        `/api/Documento/ProcesarDocumentoBike`,
         documentoLimpio,
         {
           headers: {
