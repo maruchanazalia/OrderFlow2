@@ -438,6 +438,11 @@ export class SyncScheduler {
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
 
+        if (new Date(fechaISO).getUTCFullYear() < 2026) {
+          logger.info(`Venta ${sale.sale_id} omitida para CONTPAQi porque fecha ${fechaISO} es anterior a 2026`);
+          return 'sin_movimientos';
+        }
+
         const documento = {
           Concepto: conceptoId,
           Cliente: clienteId,
@@ -604,6 +609,11 @@ export class SyncScheduler {
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
 
+        if (new Date(fechaISO).getUTCFullYear() < 2026) {
+          logger.info(`Devolución ${returnSale.saleID} omitida para CONTPAQi porque fecha ${fechaISO} es anterior a 2026`);
+          return;
+        }
+
         await this.db.enqueueContpaqiOperation(
           'process_document',
           {
@@ -671,6 +681,11 @@ export class SyncScheduler {
         const fecha = po.completeTime || po.createTime || new Date();
         const fechaISO = new Date(fecha).toISOString().replace('Z', '');
         const agente = process.env.CONTAPAQI_AGENTE || 'Sistema de Sincronización';
+
+        if (new Date(fechaISO).getUTCFullYear() < 2026) {
+          logger.info(`Compromiso de compra ${po.purchaseOrderID} omitido para CONTPAQi porque fecha ${fechaISO} es anterior a 2026`);
+          return;
+        }
 
         await this.db.enqueueContpaqiOperation(
           'process_document',

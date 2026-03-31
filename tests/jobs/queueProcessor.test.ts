@@ -110,17 +110,18 @@ describe('ContpaqiQueueProcessor', () => {
 
       mockProductsService.getProduct.mockResolvedValue(null);
 
-      await expect((processor as any).processMapProduct(operation)).rejects.toThrow();
+      await expect((processor as any).processMapProduct(operation)).resolves.toBeUndefined();
+      expect(mockDb.markQueueOperationCompleted).toHaveBeenCalled();
     });
   });
 
   describe('processDocument', () => {
-    it('debe procesar documento exitosamente', async () => {
+    it('debe procesar documento exitosamente para 2026 en adelante', async () => {
       const operation = {
         id: 1,
         payload: {
           Concepto: 'Test',
-          Fecha: '2025-01-05',
+          Fecha: '2026-01-05',
           Movimientos: [
             { CodigoProducto: 'PROD-001', Cantidad: 10 },
           ],
@@ -136,6 +137,24 @@ describe('ContpaqiQueueProcessor', () => {
 
       expect(mockDocumentsService.procesarDocumento).toHaveBeenCalled();
       expect(mockDb.markQueueOperationCompleted).toHaveBeenCalled();
+    });
+
+    it('debe omitir documento con fecha anterior a 2026', async () => {
+      const operation = {
+        id: 2,
+        payload: {
+          Concepto: 'Test',
+          Fecha: '2025-12-31',
+          Movimientos: [
+            { CodigoProducto: 'PROD-001', Cantidad: 10 },
+          ],
+        },
+      };
+
+      await (processor as any).processDocument(operation);
+
+      expect(mockDocumentsService.procesarDocumento).not.toHaveBeenCalled();
+      expect(mockDb.markQueueOperationCompleted).toHaveBeenCalledWith(2, expect.objectContaining({ skipped: true }));
     });
 
     it('debe manejar documento sin movimientos', async () => {
@@ -155,7 +174,7 @@ describe('ContpaqiQueueProcessor', () => {
         id: 1,
         payload: {
           Concepto: 'Test',
-          Fecha: '2025-01-05',
+          Fecha: '2026-01-05',
           Movimientos: [{ CodigoProducto: 'PROD-001', Cantidad: 10 }],
         },
       };

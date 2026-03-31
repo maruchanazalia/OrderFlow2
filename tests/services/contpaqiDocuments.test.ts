@@ -37,7 +37,7 @@ describe('ContpaqiDocumentsService', () => {
       
       // Verificar que Cliente, Coordenadas y Almacen fueron normalizados a '1'
       expect(mockAxios.post).toHaveBeenCalledWith(
-        '/api/Documento/ProcesarDocumento',
+        '/api/Documento/ProcesarDocumentoBike',
         expect.objectContaining({
           Cliente: '1',
           Coordenadas: '1',
